@@ -1,0 +1,46 @@
+#! /usr/bin/env node
+const yargs = require('yargs');
+const {host, port} = require('../src/config');
+const {getNewPort} = require('../src/utils');
+
+const StaticServer = require('../src/StaticServer');
+
+let argv = yargs
+  .options('w', {
+    alias:'workspace',
+    demand:false,
+    default:process.cwd(),
+    type:'string',
+    description:'静态文件根目录'
+  })
+  .option('a',{
+    alias:'host',
+    demand:false, 
+    default: host,
+    type:'string',
+    description:'配置监听的主机'
+  })
+  .option('p',{
+    alias:'port',
+    demand:false,
+    default: port,
+    type:'number',
+    description:'配置端口号'
+  })
+  .usage('static-server [options]')
+  .example(
+    'static-server -w / -p 8080 -a localhost'
+    ,'使用目录/作为工作区，在本机8080的端口上监听客户端的请求'
+  )
+  .version(false)
+  .help('h').argv;
+
+  getNewPort(argv.host, argv.port).then(port => {
+    argv.port = port;
+    new StaticServer(argv);
+
+    const os = require('os').platform();
+    const {exec} = require('child_process');
+    const url = `http://${argv.host}:${argv.port}`;
+    exec(os !== 'win32' ? `open ${url}` : `start ${url}`);
+  });
